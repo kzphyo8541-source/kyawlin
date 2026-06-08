@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ကျော်လင်း လျှပ်စစ် Care Lab</title>
+    <style>
+        :root {
+            --apple-blue: #0071e3;
+            --apple-dark: #1d1d1f;
+            --apple-gray: #f5f5f7;
+            --apple-border: #d2d2d7;
+            --premium-gold: #bf9456;
+        }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; padding: 0; }
+        body { background: var(--apple-gray); color: var(--apple-dark); padding-bottom: 60px; overflow-x: hidden; }
+
+        /* Responsive Fluid Layout */
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        /* Premium Promotion Banner */
+        .promo-banner { background: linear-gradient(135deg, #ff3b30, #ff9500); color: white; padding: 12px; text-align: center; font-weight: bold; font-size: 14px; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+
+        /* Navigation Header */
+        header { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); border-bottom: 1px solid var(--apple-border); padding: 15px 30px; position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
+        .logo-area { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+        .logo-area img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+        nav { display: flex; gap: 20px; }
+        nav a { text-decoration: none; color: #6e6e73; font-weight: 500; font-size: 14px; transition: 0.3s; cursor: pointer; }
+        nav a:hover { color: var(--apple-blue); }
+
+        /* Fluid Dynamic Marketing Spaces */
+        .hero-section { background: white; border-radius: 20px; padding: 40px; margin-bottom: 30px; text-align: center; border: 1px solid var(--apple-border); box-shadow: 0 4px 20px rgba(0,0,0,0.01); }
+        .marketing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .mkt-card { background: white; border-radius: 16px; padding: 20px; border: 1px solid var(--apple-border); position: relative; overflow: hidden; }
+        .mkt-badge { background: var(--apple-blue); color: white; padding: 4px 8px; font-size: 11px; font-weight: bold; border-radius: 6px; display: inline-block; margin-bottom: 10px; }
+
+        /* Responsive Shopping Grid */
+        .shop-section { margin-bottom: 4px; }
+        .prod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; margin-top: 15px; }
+        .prod-card { background: white; border: 1px solid var(--apple-border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; transition: 0.3s; }
+        .prod-card:hover { transform: translateY(-5px); box-shadow: 0 8px 24px rgba(0,0,0,0.05); }
+        .prod-img { height: 140px; background: #fafafa; display: flex; align-items: center; justify-content: center; font-size: 45px; border-radius: 12px; margin-bottom: 12px; }
+        .prod-name { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+        .prod-price { color: var(--apple-blue); font-weight: 700; font-size: 16px; margin-bottom: 12px; }
+        
+        .btn { background: var(--apple-blue); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; transition: 0.2s; }
+        .btn:hover { background: #0062c3; }
+        .btn-danger { background: #ff3b30; }
+        .btn-danger:hover { background: #d7261b; }
+
+        /* Flexible Shopping Cart Dock */
+        .cart-box { background: white; border-radius: 16px; border: 1px solid var(--apple-border); padding: 20px; margin-top: 30px; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--apple-border); }
+
+        /* Care Lab Magnificence About Us */
+        .about-lab { background: linear-gradient(to right, #1d1d1f, #2d2d2f); color: white; border-radius: 20px; padding: 40px; margin-top: 30px; }
+        .about-lab h2 { color: var(--premium-gold); margin-bottom: 15px; font-size: 24px; }
+        
+        /* Floating Apple-Style Chat Trigger & Window */
+        .chat-widget-container { position: fixed; bottom: 25px; right: 25px; z-index: 5000; font-size: 14px; }
+        .chat-trigger-btn { width: 60px; height: 60px; background: var(--apple-blue); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; cursor: pointer; box-shadow: 0 8px 24px rgba(0,113,227,0.3); border: none; transition: 0.3s; }
+        .chat-window { width: 360px; height: 500px; background: white; border-radius: 20px; border: 1px solid var(--apple-border); box-shadow: 0 12px 40px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; position: absolute; bottom: 75px; right: 0; }
+        .chat-window.open { display: flex; }
+        .chat-header { background: var(--apple-dark); color: white; padding: 15px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
+        .chat-body { flex-grow: 1; padding: 15px; overflow-y: auto; background: #f5f5f7; display: flex; flex-direction: column; gap: 10px; }
+        
+        /* Chat Bubbles Layout */
+        .bubble { max-width: 80%; padding: 10px 14px; border-radius: 16px; line-height: 1.4; font-size: 13px; word-break: break-word; }
+        .bubble.ai { background: white; color: var(--apple-dark); align-self: flex-start; border: 1px solid var(--apple-border); }
+        .bubble.client { background: var(--apple-blue); color: white; align-self: flex-end; }
+        .chat-footer { padding: 10px; border-top: 1px solid var(--apple-border); background: white; display: flex; gap: 8px; align-items: center; }
+        .chat-footer input[type="text"] { flex-grow: 1; padding: 10px; border: 1px solid var(--apple-border); border-radius: 20px; outline: none; }
+        
+        /* Smart Choice Chip Buttons */
+        .option-chip { background: #e3f2fd; color: var(--apple-blue); border: 1px solid #css; padding: 8px 14px; border-radius: 18px; cursor: pointer; text-align: center; font-weight: 600; font-size: 12px; display: block; margin: 5px 0; transition: 0.2s; }
+        .option-chip:hover { background: var(--apple-blue); color: white; }
+
+        /* Premium Premium Electronic Slip receipt */
+        .premium-slip { background: linear-gradient(180deg, #ffffff 0%, #fffdec 100%); border: 2px solid #e1d8b6; border-radius: 12px; padding: 15px; font-family: monospace; color: #333; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+
+        /* Responsive Breakpoints */
+        @media(max-width: 768px) {
+            header { padding: 15px; }
+            nav { display: none; } /* Mobile App Mode Bottom Menu Triggers */
+            .chat-window { width: calc(100vw - 40px); right: -10px; height: 75vh; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="promo-banner" id="bannerLiveSpace">🔥 အထူးပရိုမိုးရှင်း - ဘာပြင်ပြင် ၃,၀၀0 ကျပ် (မော်လမြိုင် Care Lab သီးသန့်)</div>
+
+    <header>
+        <div class="logo-area">
+            <img src="ကျော်လင်းlogo.jpg" id="shopLogoNav" onerror="this.style.display='none';">
+            <span id="shopTitleNav">ကျော်လင်း လျှပ်စစ် Care Lab</span>
+        </div>
+        <nav>
+            <a href="#home">ပင်မစာမျက်နှာ</a>
+            <a href="#shop">အရောင်းဆိုင်</a>
+            <a href="#about">About Our Care Lab</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="hero-section" id="heroSpaceArea">
+            <h1 style="font-size:28px; margin-bottom:10px;">မော်လမြိုင်မြို့၏ ခေတ်မီဆုံး အီလက်ထရွန်နစ် Care Lab</h1>
+            <p style="color:#6e6e73;">စိတ်ချရသော ၂၀ နှစ်သက်တမ်း ဝန်ဆောင်မှုကို Smart AI စနစ်ဖြင့် ဝန်ဆောင်မှုပေးနေပါပြီ။</p>
+        </div>
+
+        <div class="marketing-grid" id="marketingAdsGrid">
+            <div class="mkt-card">
+                <div class="mkt-badge">မိုးရာသီအထူး</div>
+                <h4 style="margin-bottom:8px;">ရေမော်တာနှင့် အရေးပေါ်ပြုပြင်ရေး</h4>
+                <p style="font-size:13px; color:#666;">မိုးတွင်းကာလ လျှပ်စစ်မီးလိုင်း ချို့ယွင်းမှုများကို အိမ်တိုင်ရာရောက် စစ်ဆေးပြုပြင်ပေးသည်။</p>
+            </div>
+            <div class="mkt-card">
+                <div class="mkt-badge">နွေရာသီအထူး</div>
+                <h4 style="margin-bottom:8px;">ပန်ကာနှင့် လေအေးပေးစက် သန့်ရှင်းရေး</h4>
+                <p style="font-size:13px; color:#666;">ပန်ကာအသံမြည်ခြင်း၊ ကွိုင်လဲခြင်းများကို သက်သာသောနှုန်းထားဖြင့် ဆောင်ရွက်ပေးသည်။</p>
+            </div>
+        </div>
+
+        <div class="shop-section" id="shop">
+            <h2>🛒 ကုန်ပစ္စည်း အရောင်းဆိုင်</h2>
+            <div class="prod-grid" id="productsDynamicContainer"></div>
+        </div>
+
+        <div class="cart-box">
+            <h3>🛍️ သင်၏ စျေးဝယ်ခြင်းတောင်း (Flexible Cart)</h3>
+            <div id="cartDisplayList" style="margin: 15px 0;">
+                <p style="color:#8e8e93; font-size:13px;">ခြင်းတောင်းထဲတွင် ပစ္စည်းမရှိသေးပါ။</p>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-weight:bold; border-top:1px solid #eee; padding-top:15px;">
+                <div>ပစ္စည်းစုစုပေါင်း ကုန်ကျငွေ:</div>
+                <div id="cartTotalPrice">0 ကျပ်</div>
+            </div>
+            <div style="margin-top:15px; display:flex; gap:10px;">
+                <input type="text" id="custDeliAddress" placeholder="ပို့ဆောင်ရမည့် နေရပ်လိပ်စာ အပြည့်အစုံ" style="flex-grow:1; padding:12px; border:1px solid var(--apple-border); border-radius:8px; outline:none;">
+                <button class="btn" style="background:#28a745;" onclick="triggerCartOrderToChat()">ခြင်းတောင်းအား Chat သို့ ပို့မည်</button>
+            </div>
+        </div>
+
+        <div class="about-lab" id="about">
+            <h2>🔬 About Our Care Lab</h2>
+            <p style="line-height:1.7; font-size:14px; color:#e5e5e5;">
+                ဆိုင်အမှတ် (၂၉/၃၄) မှန်လုံခန်း၊ မြိုင်ရတနာ နှစ်ထပ်စျေးရှေ့၊ မော်လမြိုင်မြို့။ <br>
+                ကျော်လင်းလျှပ်စစ်သည် ရိုးရိုးပြုပြင်ရေးဆိုင် မဟုတ်ဘဲ ခေတ်မီဆန်းသစ်သော တိုင်းတာစစ်ဆေးရေး ကိရိယာများ၊ တိကျသေချာသော နည်းပညာရှင်များဖြင့် ဖွဲ့စည်းထားသည့် <b>အီလက်ထရွန်နစ် Care Lab</b> ဖြစ်ပါသည်။ သက်တမ်း အနှစ် ၂၀ ကျော် တိုင်အောင် လူကြီးမင်းတို့၏ အိမ်သုံးလျှပ်စစ်ပစ္စည်းများကို အကောင်းဆုံး ပြန်လည်အသက်သွင်းပေးခဲ့ပြီး ဖြစ်ပါသည်။
+            </p>
+        </div>
+    </div>
+
+    <div class="chat-widget-container">
+        <button class="chat-trigger-btn" onclick="toggleChatWindow()">💬</button>
+        
+        <div class="chat-window" id="chatOverlayWindow">
+            <div class="chat-header">
+                <span>🤖 Smart AI Assistant</span>
+                <span style="cursor:pointer;" onclick="toggleChatWindow()">✕</span>
+            </div>
+            
+            <div id="chatAuthGate" style="padding:20px; background:white; display:block; text-align:center; height:100%;">
+                <h4 style="margin-bottom:10px;">မင်္ဂလာပါ ခင်ဗျာ</h4>
+                <p style="font-size:12px; color:#666; margin-bottom:15px;">လူကြီးမင်းနှင့် ဆိုင်ရှင် တိုက်ရိုက် ဆက်သွယ်နိုင်ရန် အမည်နှင့် ဖုန်းနံပါတ် ဖြည့်ပေးပါခင်ဗျာ။</p>
+                <input type="text" id="clientAuthName" placeholder="လူကြီးမင်းအမည်" style="width:100%; padding:10px; margin-bottom:8px; border:1px solid var(--apple-border); border-radius:8px; outline:none;">
+                <input type="text" id="clientAuthPhone" placeholder="ဖုန်းနံပါတ်" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid var(--apple-border); border-radius:8px; outline:none;">
+                <button class="btn" style="width:100%;" onclick="bypassAuthAndRegisterUser()">စတင်ဆွေးနွေးမည်</button>
+            </div>
+
+            <div id="chatActivePlatform" style="display:none; flex-direction:column; height:calc(100% - 50px);">
+                <div class="chat-body" id="chatCoreBubblesConsole">
+                    </div>
+                <div class="chat-footer">
+                    <button style="border:none; background:none; font-size:20px; cursor:pointer;" onclick="document.getElementById('imageUploaderRef').click()">📷</button>
+                    <button style="border:none; background:none; font-size:20px; cursor:pointer;" onclick="shareClientGPSLocation()">📍</button>
+                    <input type="file" id="imageUploaderRef" style="display:none;" accept="image/*,video/*" onchange="uploadChatMediaContent()">
+                    
+                    <input type="text" id="clientChatMessageText" placeholder="မက်ဆေ့ခ်ျ ရိုက်ပါ...">
+                    <button class="btn" style="padding:8px 12px; border-radius:20px;" onclick="dispatchClientMessageManual()">ပို့</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let clientSession = null;
+        let cart = [];
+        let repairFlowStep = 0;
+        let repairDataDraft = {};
+
+        function toggleChatWindow() {
+            document.getElementById('chatOverlayWindow').classList.toggle('open');
+        }
+
+        function bypassAuthAndRegisterUser() {
+            const name = document.getElementById('clientAuthName').value.trim();
+            const phone = document.getElementById('clientAuthPhone').value.trim();
+            if(!name || !phone) { alert("ကျေးဇူးပြု၍ အချက်အလက်များ ပြည့်စုံစွာ ဖြည့်သွင်းပေးပါ"); return; }
+            
+            clientSession = { id: 'UID-' + Date.now(), name: name, phone: phone };
+            document.getElementById('chatAuthGate').style.display = 'none';
+            document.getElementById('chatActivePlatform').style.display = 'flex';
+
+            // Connect and register session node inside cloud
+            let db = JSON.parse(localStorage.getItem('chat_sessions')) || {};
+            db[clientSession.id] = { id: clientSession.id, name: name, phone: phone, messages: [], unread: true };
+            localStorage.setItem('chat_sessions', JSON.stringify(db));
+
+            // Auto Trigger AI First Greeting Response Rule "Hi" Simulation
+            injectChatBubble('ai', `မင်္ဂလာပါ ${name} ခင်ဗျာ။ ကျော်လင်းလျှပ်စစ် Care Lab AI မှ ကြိုဆိုပါတယ်။ ဆောင်ရွက်လိုသည့် ဝန်ဆောင်မှုကို အောက်ပါ Option များမှ ရွေးချယ်ပေးပါရန်။`);
+            injectChoiceChips();
+            startPollingDatabaseSync();
+        }
+
+        function injectChatBubble(sender, text) {
+            const consoleBox = document.getElementById('chatCoreBubblesConsole');
+            consoleBox.innerHTML += `<div class="bubble ${sender}">${text}</div>`;
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+
+            if(clientSession) {
+                let db = JSON.parse(localStorage.getItem('chat_sessions')) || {};
+                if(db[clientSession.id]) {
+                    db[clientSession.id].messages.push({ sender: sender, text: text });
+                    db[clientSession.id].unread = (sender === 'client');
+                    localStorage.setItem('chat_sessions', JSON.stringify(db));
+                }
+            }
+        }
+
+        function injectChoiceChips() {
+            const consoleBox = document.getElementById('chatCoreBubblesConsole');
+            consoleBox.innerHTML += `
+                <div style="margin: 5px 0;" id="chipsContainerBlock">
+                    <div class="option-chip" onclick="handleChipDecision('repair')">🔧 ပြုပြင်ရေး ဝန်ဆောင်မှု ရယူရန်</div>
+                    <div class="option-chip" onclick="handleChipDecision('shop')">🛒 အရောင်းဆိုင်သို့ သွားမည်</div>
+                </div>
+            `;
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        function handleChipDecision(choice) {
+            document.getElementById('chipsContainerBlock')?.remove();
+            if(choice === 'shop') {
+                injectChatBubble('client', 'အရောင်းဆိုင်သို့ သွားမည်');
+                injectChatBubble('ai', 'အရောင်းဆိုင်သို့ လမ်းညွှန်ပေးလိုက်ပါပြီ ခင်ဗျာ။ ခြင်းတောင်းထဲ ပစ္စည်းများထည့်ပြီး လိပ်စာကို ပို့ပေးနိုင်ပါတယ်!');
+                window.location.href = '#shop';
+            } else if (choice === 'repair') {
+                injectChatBubble('client', 'ပြုပြင်ရေး ဝန်ဆောင်မှု ရယူရန်');
+                repairFlowStep = 1;
+                injectChatBubble('ai', 'ပြုပြင်ရန် ပစ္စည်းအမျိုးအစားကို ပြောပြပေးပါခင်ဗျာ (ဥပမာ - ပန်ကာ၊ ရေမော်တာ၊ TV)။');
+            }
+        }
+
+        function dispatchClientMessageManual() {
+            const inp = document.getElementById('clientChatMessageText');
+            const txt = inp.value.trim();
+            if(!txt) return;
+
+            injectChatBubble('client', txt);
+            inp.value = '';
+
+            // AI COGNITIVE LOGIC FLOW FOR REPAIR QUESTIONS TREE REGULATION
+            if(repairFlowStep > 0) {
+                setTimeout(() => {
+                    if(repairFlowStep === 1) {
+                        repairDataDraft.item = txt;
+                        repairFlowStep = 2;
+                        injectChatBubble('ai', 'ပစ္စည်း ဘယ်လို လက္ခဏာမျိုး ဖြစ်ပြီး ပျက်နေတာလဲ ခင်ဗျာ? (ဥပမာ - လည်ရင် အသံမြည်လို့၊ မီးမဝင်လို့)');
+                    } else if(repairFlowStep === 2) {
+                        repairDataDraft.symptom = txt;
+                        repairFlowStep = 3;
+                        injectChatBubble('ai', 'ပျက်စီးနေတာ ဘယ်လောက်ကြာမြင့်နေပြီလဲ ခင်ဗျာ? ပြီးလျှင် ပစ္စည်း၏ ပြစ်ချက်ပုံစံ သို့မဟုတ် ဗီဒီယိုကို အောက်ခြေရှိ 📷 အိုင်ကွန်မှတစ်ဆင့် ပေးပို့ပေးနိုင်ပါတယ်ခင်ဗျာ။');
+                    } else if(repairFlowStep === 3) {
+                        repairDataDraft.duration = txt;
+                        repairFlowStep = 0; // End Flow Engine
+                        injectChatBubble('ai', 'အချက်အလက်များကို မှတ်တမ်းတင်ပြီးပါပြီ။ တည်နေရာအတိအကျကို သိရှိနိုင်ရန် 📍 အိုင်ကွန်ကို နှိပ်ပြီး GPS Location Share ပေးပါရန် မေတ္တာရပ်ခံအပ်ပါတယ်ခင်ဗျာ။ ဆိုင်ရှင်မှ စစ်ဆေးပြီး ချက်ချင်း စာပြန်ပါမည်။');
+                    }
+                }, 800);
+            }
+        }
+
+        function uploadChatMediaContent() {
+            const file = document.getElementById('imageUploaderRef').files[0];
+            if(file) {
+                injectChatBubble('client', `📸 [ပူးတွဲဖိုင် ပေးပို့ခဲ့သည်]: ${file.name}`);
+            }
+        }
+
+        function shareClientGPSLocation() {
+            if(navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    let mapsLink = `📍 [GPS Live Location Shared]: https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
+                    injectChatBubble('client', mapsLink);
+                }, () => {
+                    injectChatBubble('client', "📍 [GPS Location] ရယူရန် ခွင့်ပြုချက် ငြင်းပယ်ထားပါသည် (မော်လမြိုင်မြို့တွင်း)");
+                });
+            }
+        }
+
+        function triggerCartOrderToChat() {
+            const addr = document.getElementById('custDeliAddress').value.trim();
+            if(cart.length === 0) { alert("ခြင်းတောင်းထဲတွင် ပစ္စည်းမရှိပါ"); return; }
+            if(!addr) { alert("ပို့ဆောင်ရမည့် လိပ်စာ ဖြည့်ပါ"); return; }
+            if(!clientSession) { alert("Chat Box ကို ဖွင့်ပြီး အမည်အရင် ဖြည့်သွင်းပေးပါ ခင်ဗျာ။"); toggleChatWindow(); return; }
+
+            let total = cart.reduce((sum, i) => sum + i.price, 0);
+            let summary = `🛒 [မှာယူလိုသော ပစ္စည်းများ]: ${cart.map(i => i.name).join(', ')} \n💰 ကုန်ကျငွေ: ${total.toLocaleString()} ကျပ် \n📍 ပို့ရမည့်လိပ်စာ: ${addr} \n🚚 ဆိုင်ရှင်ထံမှ Delivery အခာအပြတ်အသတ်ကို စောင့်ဆိုင်းနေပါသည်။`;
+            
+            injectChatBubble('client', summary);
+            toggleChatWindow();
+            cart = [];
+            updateCartDisplayDock();
+            document.getElementById('custDeliAddress').value = '';
+        }
+
+        // BACKEND SYNCHRONIZATION DATA RETRIEVAL
+        function syncShopAdminMarketingAssets() {
+            let config = JSON.parse(localStorage.getItem('admin_config_data')) || {
+                title: "ကျော်လင်း လျှပ်စစ် Care Lab", banner: "🔥 အထူးပရိုမိုးရှင်း - ဘာပြင်ပြင် ၃,၀၀၀ ကျပ် (မော်လမြိုင် Care Lab သီးသန့်)", heroTitle: "မော်လမြိုင်မြို့၏ ခေတ်မီဆုံး အီလက်ထရွန်နစ် Care Lab", heroDesc: "စိတ်ချရသော ၂၀ နှစ်သက်တမ်း ဝန်ဆောင်မှုကို Smart AI စနစ်ဖြင့် ဝန်ဆောင်မှုပေးနေပါပြီ။"
+            };
+            document.getElementById('shopTitleNav').innerText = config.title;
+            document.getElementById('bannerLiveSpace').innerText = config.banner;
+            document.getElementById('heroSpaceArea').innerHTML = `<h1 style="font-size:28px; margin-bottom:10px;">${config.heroTitle}</h1><p style="color:#6e6e73;">${config.heroDesc}</p>`;
+
+            let stock = JSON.parse(localStorage.getItem('admin_products')) || [];
+            const container = document.getElementById('productsDynamicContainer');
+            container.innerHTML = '';
+            stock.forEach(p => {
+                container.innerHTML += `
+                    <div class="prod-card">
+                        <div class="prod-img">💡</div>
+                        <div class="prod-name">${p.name}</div>
+                        <div class="prod-price">${p.price.toLocaleString()} ကျပ်</div>
+                        <button class="btn" onclick="addItemToFlexibleCart(${p.id}, '${p.name}', ${p.price})">🛒 ခြင်းတောင်းထဲထည့်မည်</button>
+                    </div>
+                `;
+            });
+        }
+
+        function addItemToFlexibleCart(id, name, price) {
+            cart.push({ cartInstanceId: Date.now(), id, name, price });
+            updateCartDisplayDock();
+        }
+
+        function removeCartItemInstance(instanceId) {
+            cart = cart.filter(c => c.cartInstanceId !== instanceId);
+            updateCartDisplayDock();
+        }
+
+        function updateCartDisplayDock() {
+            const list = document.getElementById('cartDisplayList');
+            if(cart.length === 0) {
+                list.innerHTML = `<p style="color:#8e8e93; font-size:13px;">ခြင်းတောင်းထဲတွင် ပစ္စည်းမရှိသေးပါ။</p>`;
+                document.getElementById('cartTotalPrice').innerText = "0 ကျပ်";
+                return;
+            }
+            list.innerHTML = '';
+            let total = 0;
+            cart.forEach(c => {
+                total += c.price;
+                list.innerHTML += `
+                    <div class="cart-item">
+                        <span>• ${c.name} (${c.price.toLocaleString()} ကျပ်)</span>
+                        <button class="btn btn-danger" style="padding:4px 8px; font-size:11px;" onclick="removeCartItemInstance(${c.cartInstanceId})">ဖယ်ထုတ်ရန်</button>
+                    </div>
+                `;
+            });
+            document.getElementById('cartTotalPrice').innerText = total.toLocaleString() + " ကျပ်";
+        }
+
+        function startPollingDatabaseSync() {
+            setInterval(() => {
+                if(!clientSession) return;
+                let db = JSON.parse(localStorage.getItem('chat_sessions')) || {};
+                if(db[clientSession.id]) {
+                    const consoleBox = document.getElementById('chatCoreBubblesConsole');
+                    let currentLength = consoleBox.querySelectorAll('.bubble').length;
+                    // If backend updated more chat elements, redraw console
+                    if(db[clientSession.id].messages.length > currentLength) {
+                        consoleBox.innerHTML = '';
+                        db[clientSession.id].messages.forEach(m => {
+                            consoleBox.innerHTML += `<div class="bubble ${m.sender}">${m.text}</div>`;
+                        });
+                        consoleBox.scrollTop = consoleBox.scrollHeight;
+                    }
+                }
+            }, 1500);
+        }
+
+        window.onload = function() {
+            // Seed base dynamic storage if empty
+            if(!localStorage.getItem('admin_products')) {
+                localStorage.setItem('admin_products', JSON.stringify([
+                    { id: 201, name: "LED အခန်းသုံးမီးသီး", price: 4500 },
+                    { id: 202, name: "Heavy Duty ဝါယာခွေ", price: 12500 }
+                ]));
+            }
+            syncShopAdminMarketingAssets();
+            setInterval(syncShopAdminMarketingAssets, 3000);
+        };
+    </script>
+</body>
+</html>

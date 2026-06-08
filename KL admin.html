@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Care Lab - Control Suite (Admin Panel)</title>
+    <style>
+        :root { --apple-blue: #0071e3; --apple-dark: #1d1d1f; --apple-gray: #f5f5f7; --border: #d2d2d7; }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; }
+        body { background: var(--apple-gray); color: var(--apple-dark); display: flex; height: 100vh; overflow: hidden; }
+
+        /* Left Side Multi-Inbox Panels */
+        .sidebar-inbox { width: 300px; background: white; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .sb-header { padding: 15px; background: var(--apple-dark); color: white; }
+        .session-list { flex-grow: 1; overflow-y: auto; }
+        .session-card { padding: 12px 15px; border-bottom: 1px solid var(--apple-gray); cursor: pointer; position: relative; }
+        .session-card:hover { background: var(--apple-gray); }
+        .session-card.active { background: #e3f2fd; border-left: 4px solid var(--apple-blue); }
+        .unread-indicator { position: absolute; right: 15px; top: 15px; width: 8px; height: 8px; background: #ff3b30; border-radius: 50%; }
+
+        /* Main Workspace Right Side scroll container */
+        .main-workspace { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .tabs-header { background: white; border-bottom: 1px solid var(--border); display: flex; padding: 0 15px; }
+        .tab-btn { padding: 15px; background: none; border: none; cursor: pointer; font-weight: 600; color: #6e6e73; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: var(--apple-blue); border-bottom-color: var(--apple-blue); }
+        
+        .workspace-body { flex-grow: 1; padding: 20px; overflow-y: auto; display: none; }
+        .workspace-body.active { display: block; }
+
+        /* Grid Metrics Dashboard Control */
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .metric-card { background: white; border: 1px solid var(--border); padding: 15px; border-radius: 12px; }
+        .metric-num { font-size: 24px; font-weight: bold; color: var(--apple-blue); margin-top: 5px; }
+
+        /* Forms Layout & Table Dashboard */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; outline: none; }
+        .btn { background: var(--apple-blue); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); margin-top: 10px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
+        th { background: #f5f5f7; font-weight: bold; }
+
+        /* Chat Platform Layout in Dashboard Container */
+        .chat-sub-layout { display: flex; height: 100%; gap: 15px; }
+        .chat-box-area { flex-grow: 1; background: white; border: 1px solid var(--border); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; }
+        .chat-scroller { flex-grow: 1; padding: 15px; background: #f5f5f7; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .bubble { max-width: 75%; padding: 10px 14px; border-radius: 16px; font-size: 13px; }
+        .bubble.client { background: white; border: 1px solid var(--border); align-self: flex-start; }
+        .bubble.admin { background: var(--apple-dark); color: white; align-self: flex-end; }
+
+        /* Premium Slips Output template generation */
+        .receipt-card-preview { background: #fffdec; border: 2px solid #e1d8b6; padding: 15px; border-radius: 12px; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar-inbox">
+        <div class="sb-header">
+            <h3 style="font-size:16px;">📥 Care Lab Inbox</h3>
+            <p style="font-size:11px; color:#aaa; margin-top:2px;">Live Client Sync Tracking Engine</p>
+        </div>
+        <div class="session-list" id="adminSessionListContainer"></div>
+    </div>
+
+    <div class="main-workspace">
+        <div class="tabs-header">
+            <button class="tab-btn active" onclick="switchAdminTab('chat')">💬 Live Chat Workspace</button>
+            <button class="tab-btn" onclick="switchAdminTab('marketing')">📢 Marketing Spaces</button>
+            <button class="tab-btn" onclick="switchAdminTab('inventory')">📦 Shop Inventory</button>
+            <button class="tab-btn" onclick="switchAdminTab('accounting')">📊 AI Accounting & Database</button>
+        </div>
+
+        <div id="tab-chat" class="workspace-body active" style="height: calc(100vh - 60px); padding: 15px;">
+            <div class="chat-sub-layout">
+                <div class="chat-box-area">
+                    <div style="padding:12px; border-bottom:1px solid var(--border); font-weight:bold;" id="selectedUserHeaderName">စကားပြောခန်း ရွေးချယ်ပေးပါ</div>
+                    <div class="chat-scroller" id="adminChatBubbleScrollerConsole"></div>
+                    <div style="padding:15px; border-top:1px solid var(--border); background:white;">
+                        <div style="background:#f5f5f7; padding:10px; border-radius:8px; display:flex; gap:10px; margin-bottom:10px; align-items:center;">
+                            <span style="font-size:12px; font-weight:bold;">🧾 Premium Apple-Style Slip Generator:</span>
+                            <input type="number" id="slipDeliPrice" placeholder="Deli ခ (ကျပ်)" style="width:110px; padding:6px; border:1px solid var(--border); border-radius:6px;">
+                            <input type="text" id="slipItemsDesc" placeholder="ဝယ်ယူ/ပြုပြင်မှု အကျဉ်းချုပ်" style="flex-grow:1; padding:6px; border:1px solid var(--border); border-radius:6px;">
+                            <button class="btn" style="background:#28a745; padding:6px 12px; font-size:12px;" onclick="injectPremiumReceiptSlipToClient()">Slip ဖြတ်ပိုင်း ပို့မည်</button>
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <input type="text" id="adminReplyMsgInput" placeholder="စာပြန်ကြားရန်..." style="flex-grow:1; padding:10px; border:1px solid var(--border); border-radius:8px; outline:none;">
+                            <button class="btn" onclick="dispatchAdminReplyMessage()">ပို့မည်</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-marketing" class="workspace-body">
+            <h2>📢 Seasonal Marketing Spaces & Ads Config</h2>
+            <p style="color:#6e6e73; margin-bottom:20px;">ဝယ်သူဆိုက်ဒ်ရှိ Promo Banner နှင့် ကြော်ငြာစာသားများကို စိတ်ကြိုက်ပြောင်းလဲနိုင်သည့်နေရာ</p>
+            
+            <div class="metric-card" style="max-width:600px;">
+                <div class="form-group"><label>Care Lab ဆိုင်အမည်</label><input type="text" id="cfgTitle" value="ကျော်လင်း လျှပ်စစ် Care Lab"></div>
+                <div class="form-group"><label>အပေါ်ဆုံးသီးသန့် Promo Banner စာသား</label><input type="text" id="cfgBanner" value="🔥 အထူးပရိုမိုးရှင်း - ဘာပြင်ပြင် ၃,၀၀၀ ကျပ် (မော်လမြိုင် Care Lab သီးသန့်)"></div>
+                <div class="form-group"><label>Hero ကြော်ငြာ ခေါင်းစဉ်ကြီး</label><input type="text" id="cfgHeroTitle" value="မော်လမြိုင်မြို့၏ ခေတ်မီဆုံး အီလက်ထရွန်နစ် Care Lab"></div>
+                <div class="form-group"><label>Hero ကြော်ငြာ အညွှန်းစာသား</label><textarea id="cfgHeroDesc" rows="2">စိတ်ချရသော ၂၀ နှစ်သက်တမ်း ဝန်ဆောင်မှုကို Smart AI စနစ်ဖြင့် ဝန်ဆောင်မှုပေးနေပါပြီ။</textarea></div>
+                <button class="btn" onclick="saveMarketingConfigurationSpace()">💾 ကြော်ငြာများကို ဆိုင်တွင် Live တင်မည်</button>
+            </div>
+        </div>
+
+        <div id="tab-inventory" class="workspace-body">
+            <h2>📦 Retail Shop Inventory Control</h2>
+            <p style="color:#6e6e73; margin-bottom:20px;">ပစ္စည်းအသစ်များ တင်ခြင်း၊ ဈေးနှုန်းပြင်ခြင်းနှင့် ဖျက်ခြင်း စနစ်</p>
+
+            <div style="display:grid; grid-template-columns: 1.2fr 1.8fr; gap:20px;">
+                <div class="metric-card">
+                    <h4>➕ ပစ္စည်းအသစ်ထည့်ရန်ဖောင်</h4>
+                    <div class="form-group" style="margin-top:10px;"><label>ကုန်စည်အမည်</label><input type="text" id="invProdName" placeholder="ဥပမာ- LED မီးသီးစား"></div>
+                    <div class="form-group"><label>ဈေးနှုန်း (ကျပ်)</label><input type="number" id="invProdPrice" placeholder="ဥပမာ- ၄၅၀၀"></div>
+                    <button class="btn" onclick="addNewProductToStoreFront()">📦 ကုန်စည်စာရင်းထဲ ထည့်မည်</button>
+                </div>
+                <div>
+                    <h4>📋 လက်ရှိရောင်းချနေသော ပစ္စည်းများစာရင်း</h4>
+                    <table id="inventoryStockTable">
+                        <thead><tr><th>ID</th><th>ကုန်စည်အမည်</th><th>ဈေးနှုန်း</th><th>လုပ်ဆောင်ချက်</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-accounting" class="workspace-body">
+            <h2>📊 AI Specialist Database & Accounting Logs</h2>
+            <p style="color:#6e6e73; margin-bottom:20px;">ဆိုင်ရှင်အတွက် အနာဂတ်စီးပွားရေး Plan များချမှတ်နိုင်ရန် AI စာရင်းကိုင်နှင့် သတင်းအချက်အလက်များကို ထိန်းသိမ်းပေးသည့်စနစ်</p>
+
+            <div class="metrics-grid">
+                <div class="metric-card"><div>👥 စုစုပေါင်း Client အကောင့်များ</div><div class="metric-num" id="statTotalClients">0</div></div>
+                <div class="metric-card"><div>💬 လက်ခံရရှိသော စာစောင်များ</div><div class="metric-num" id="statTotalMsgs">0</div></div>
+                <div class="metric-card"><div>📦 တင်သွင်းထားသော စတော့အမျိုးအစား</div><div class="metric-num" id="statTotalProducts">0</div></div>
+            </div>
+
+            <h4>👥 Registered Client Database Logs</h4>
+            <table id="clientDatabaseLogsTable">
+                <thead><tr><th>အမည်</th><th>ဖုန်းနံပါတ်</th><th>နောက်ဆုံးပြောခဲ့သည့်စာ</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let currentSelectedUid = null;
+
+        function switchAdminTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.workspace-body').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+            if(tabId === 'accounting') { computeAIAccountingMetricsIntelligence(); }
+            if(tabId === 'inventory') { renderInventoryTableData(); }
+        }
+
+        // MARKETING MANAGEMENT SETTINGS STORAGE
+        function saveMarketingConfigurationSpace() {
+            let data = {
+                title: document.getElementById('cfgTitle').value, banner: document.getElementById('cfgBanner').value, heroTitle: document.getElementById('cfgHeroTitle').value, heroDesc: document.getElementById('cfgHeroDesc').value
+            };
+            localStorage.setItem('admin_config_data', JSON.stringify(data));
+            alert("🎯 မားကတ်တင်းကြော်ငြာများကို ဆိုင်မျက်နှာပြင်တွင် Live Update ပြုလုပ်ပြီးပါပြီ ခင်ဗျာ!");
+        }
+
+        // INVENTORY MANAGEMENT CONTROL LOGIC
+        function renderInventoryTableData() {
+            let stock = JSON.parse(localStorage.getItem('admin_products')) || [];
+            document.getElementById('statTotalProducts').innerText = stock.length;
+            const tbody = document.querySelector('#inventoryStockTable tbody');
+            tbody.innerHTML = '';
+            stock.forEach((p, idx) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${p.id}</td>
+                        <td><b>${p.name}</b></td>
+                        <td>${p.price.toLocaleString()} ကျပ်</td>
+                        <td><button class="btn" style="background:#ff3b30; padding:4px 8px; font-size:11px;" onclick="deleteProductFromInventory(${p.id})">ဖျက်မည်</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function addNewProductToStoreFront() {
+            const name = document.getElementById('invProdName').value.trim();
+            const price = document.getElementById('invProdPrice').value.trim();
+            if(!name || !price) return;
+
+            let stock = JSON.parse(localStorage.getItem('admin_products')) || [];
+            stock.push({ id: Date.now(), name: name, price: parseInt(price) });
+            localStorage.setItem('admin_products', JSON.stringify(stock));
+            
+            document.getElementById('invProdName').value = '';
+            document.getElementById('invProdPrice').value = '';
+            renderInventoryTableData();
+        }
+
+        function deleteProductFromInventory(id) {
+            let stock = JSON.parse(localStorage.getItem('admin_products')) || [];
+            stock = stock.filter(p => p.id !== id);
+            localStorage.setItem('admin_products', JSON.stringify(stock));
+            renderInventoryTableData();
+        }
+
+        // CHAT INBOX CHANNELS RECONCILIATION
+        function pollChatSessionsNetwork() {
+            let sessions = JSON.parse(localStorage.getItem('chat_sessions')) || {};
+            const container = document.getElementById('adminSessionListContainer');
+            
+            // Check if count changed or just update UI elements to prevent resetting focus
+            let previousHTML = container.innerHTML;
+            let currentHTML = '';
+
+            Object.values(sessions).forEach(user => {
+                let activeClass = user.id === currentSelectedUid ? 'active' : '';
+                let unreadDot = user.unread ? `<div class="unread-indicator"></div>` : '';
+                let lastMsg = user.messages.length > 0 ? user.messages[user.messages.length - 1].text.substring(0, 25) + '...' : 'စာမရှိသေးပါ';
+                
+                currentHTML += `
+                    <div class="session-card ${activeClass}" onclick="selectClientSessionNode('${user.id}')">
+                        <div style="font-weight:700; font-size:13px;">👤 ${user.name}</div>
+                        <div style="font-size:11px; color:#666; margin:2px 0;">📞 ${user.phone}</div>
+                        <div style="font-size:11px; color:#999; overflow:hidden;">${lastMsg}</div>
+                        ${unreadDot}
+                    </div>
+                `;
+            });
+
+            if(previousHTML !== currentHTML) { container.innerHTML = currentHTML; }
+        }
+
+        function selectClientSessionNode(uid) {
+            currentSelectedUid = uid;
+            let sessions = JSON.parse(localStorage.getItem('chat_sessions')) || {};
+            if(sessions[uid]) {
+                sessions[uid].unread = false;
+                localStorage.setItem('chat_sessions', JSON.stringify(sessions));
+                document.getElementById('selectedUserHeaderName').innerText = `👤 ${sessions[uid].name} (${sessions[uid].phone})`;
+                renderActiveConversationStream();
+                pollChatSessionsNetwork();
+            }
+        }
+
+        function renderActiveConversationStream() {
+            if(!currentSelectedUid) return;
+            let sessions = JSON.parse(localStorage.getItem('chat_sessions')) || {};
+            const scroller = document.getElementById('adminChatBubbleScrollerConsole');
+            
+            if(sessions[currentSelectedUid]) {
+                let currentCount = scroller.querySelectorAll('.bubble').length;
+                if(sessions[currentSelectedUid].messages.length !== currentCount) {
+                    scroller.innerHTML = '';
+                    sessions[currentSelectedUid].messages.forEach(m => {
+                        scroller.innerHTML += `<div class="bubble ${m.sender}">${m.text}</div>`;
+                    });
+                    scroller.scrollTop = scroller.scrollHeight;
+                }
+            }
+        }
+
+        function dispatchAdminReplyMessage() {
+            const inp = document.getElementById('adminReplyMsgInput');
+            const txt = inp.value.trim();
+            if(!txt || !currentSelectedUid) return;
+
+            let sessions = JSON.parse(localStorage.getItem('chat_sessions')) || {};
+            if(sessions[currentSelectedUid]) {
+                sessions[currentSelectedUid].messages.push({ sender: 'admin', text: txt });
+                localStorage.setItem('chat_sessions', JSON.stringify(sessions));
+                renderActiveConversationStream();
+                inp.value = '';
+            }
+        }
+
+        //🧾 INJECT PREMIUM DIGITAL INTERACTIVE RECEIPT SLIP MECHANICS
+        function injectPremiumReceiptSlipToClient() {
+            const deli = document.getElementById('slipDeliPrice').value.trim();
+            const desc = document.getElementById('slipItemsDesc').value.trim();
+            if(!deli || !desc || !currentSelectedUid) { alert("Deli ခ နှင့် အကျဉ်းချုပ် ဖြည့်စွက်ပေးပါ"); return; }
+
+            let slipHTML = `
+                <div class="premium-slip">
+                    <div style="text-align:center; font-weight:bold; font-size:14px; margin-bottom:5px; border-bottom:1px dashed #ccc; padding-bottom:5px;">🧾 KYAW LIN CARE LAB RECEIPT</div>
+                    <div style="margin: 8px 0; font-size:12px; line-height:1.5;">
+                        <b>• ကုန်စည်/ပြုပြင်မှု:</b> ${desc}<br>
+                        <b>• Delivery ပို့ဆောင်ခ:</b> ${parseInt(deli).toLocaleString()} ကျပ်<br>
+                    </div>
+                    <div style="background:var(--apple-dark); color:white; text-align:center; padding:6px; border-radius:6px; font-size:11px; font-weight:bold; margin-top:5px;">
+                        ✨ အော်ဒါ အောင်မြင်စွာ အတည်ပြုပြီးပါပြီ ✨
+                    </div>
+                </div>
+            `;
+
+            let sessions = JSON.parse(localStorage.getItem('chat_sessions')) || {};
+            if(sessions[currentSelectedUid]) {
+                sessions[currentSelectedUid].messages.push({ sender: 'admin', text: slipHTML });
+                localStorage.setItem('chat_sessions', JSON.stringify(sessions));
+                renderActiveConversationStream();
+                document.getElementById('slipDeliPrice').value = '';
+                document.getElementById('slipItemsDesc').value = '';
+            }
+        }
+
+        // METRICS INTELLIGENCE ENGINE ACCOUNTING DATABASE
+        function computeAIAccountingMetricsIntelligence() {
+            let sessions = JSON.parse(localStorage.getItem('chat_sessions')) || {};
+            let clientsList = Object.values(sessions);
+            
+            document.getElementById('statTotalClients').innerText = clientsList.length;
+            
+            let totalMsgs = 0;
+            const clientTableBody = document.querySelector('#clientDatabaseLogsTable tbody');
+            clientTableBody.innerHTML = '';
+
+            clientsList.forEach(c => {
+                totalMsgs += c.messages.length;
+                let lastTxt = c.messages.length > 0 ? c.messages[c.messages.length - 1].text.substring(0, 40) : '-';
+                clientTableBody.innerHTML += `<tr><td><b>${c.name}</b></td><td>${c.phone}</td><td style="color:#666;">${lastTxt}</td></tr>`;
+            });
+            document.getElementById('statTotalMsgs').innerText = totalMsgs;
+        }
+
+        window.onload = function() {
+            pollChatSessionsNetwork();
+            setInterval(() => {
+                pollChatSessionsNetwork();
+                renderActiveConversationStream();
+            }, 1500);
+        };
+    </script>
+</body>
+</html>
