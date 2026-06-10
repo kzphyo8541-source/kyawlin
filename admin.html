@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kyaw Linn - Elite Pro Admin Console</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { display: flex; height: 100vh; background: #0f172a; color: #f8fafc; }
+        
+        /* Layout Structure */
+        .sidebar { width: 320px; background: #1e293b; border-right: 1px solid #334155; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; background: #0f172a; font-weight: bold; font-size: 1.1rem; border-bottom: 2px solid #eab308; display: flex; justify-content: space-between; align-items: center; }
+        .client-list { flex: 1; overflow-y: auto; }
+        .client-item { padding: 15px 20px; border-bottom: 1px solid #334155; cursor: pointer; transition: background 0.2s; }
+        .client-item:hover { background: #334155; }
+        .client-item.active { background: #1e3a8a; border-left: 5px solid #3b82f6; }
+        
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #0f172a; }
+        .top-navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #1e293b; border-bottom: 1px solid #334155; }
+        
+        /* Workspace Setup */
+        .workspace-grid { flex: 1; display: grid; grid-template-columns: 1.2fr 1fr; gap: 15px; padding: 15px; overflow: hidden; }
+        .panel { background: #1e293b; border-radius: 12px; border: 1px solid #334155; display: flex; flex-direction: column; overflow: hidden; padding: 15px; }
+        
+        /* Chat Area */
+        .chat-body { flex: 1; padding: 15px; overflow-y: auto; background: #0f172a; display: flex; flex-direction: column; gap: 10px; border-radius: 8px; }
+        .msg { max-width: 80%; padding: 10px; border-radius: 8px; font-size: 0.9rem; }
+        .msg-user { background: #334155; color: #fff; align-self: flex-start; }
+        .msg-admin { background: #2563eb; color: #fff; align-self: flex-end; }
+        .chat-input { background: #0f172a; border: 1px solid #334155; color: #fff; padding: 10px; border-radius: 6px; flex: 1; outline: none; }
+        
+        /* Image inside chat view style */
+        .chat-img-render { max-width: 100%; max-height: 200px; border-radius: 6px; margin-top: 5px; display: block; cursor: pointer; border: 1px solid #475569; }
+
+        /* Items Manager and POS Input forms */
+        .input-text { width: 100%; padding: 8px; margin: 5px 0; background: #0f172a; border: 1px solid #334155; color: #fff; border-radius: 4px; font-size: 0.85rem; }
+        .btn { padding: 8px 15px; border-radius: 4px; font-weight: bold; border: none; cursor: pointer; }
+        .btn-blue { background: #2563eb; color: white; }
+        .btn-green { background: #16a34a; color: white; }
+        .btn-red { background: #dc2626; color: white; }
+        .btn-orange { background: #ea580c; color: white; }
+        
+        .btn-photo { background: #475569; color: white; padding: 8px 12px; border-radius: 6px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
+        .btn-photo:hover { background: #64748b; }
+
+        /* Tables & Lists */
+        .scroll-box { flex: 1; overflow-y: auto; margin-top: 10px; max-height: 200px; }
+        .custom-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left; }
+        .custom-table th { background: #0f172a; padding: 8px; color: #eab308; }
+        .custom-table td { padding: 8px; border-bottom: 1px solid #334155; }
+
+        /* Timers */
+        .timer-badge { padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; background: #dc2626; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+
+        /* POS Slip Styling Modal */
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:9999; }
+        .slip-paper { background: white; color: black; width: 350px; padding: 20px; font-family: 'Courier New', monospace; font-size: 0.8rem; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <span>👥 စကားပြောခန်းများ</span>
+            <span id="noti-indicator" style="background:#dc2626; font-size:0.7rem; padding:2px 6px; border-radius:10px; display:none;">NEW</span>
+        </div>
+        <div class="client-list" id="admin-client-list"></div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-navbar">
+            <h2>🛠️ Kyaw Linn Command & Control Panel</h2>
+            <button class="btn btn-red" onclick="localStorage.clear(); location.reload();" style="font-size:0.75rem;">ဒေတာအားလုံး Clear လုပ်ရန်</button>
+        </div>
+
+        <div class="workspace-grid">
+            
+            <div style="display:flex; flex-direction:column; gap:15px;">
+                <div class="panel" style="flex: 1.2;">
+                    <h3 style="color:#3b82f6; margin-bottom:10px;" id="chat-title">💬 Chat Console</h3>
+                    <div class="chat-body" id="admin-chat-box"></div>
+                    <div class="chat-footer" style="display:flex; gap:8px; margin-top:10px; align-items:center;">
+                        <input type="file" id="admin-photo-input" accept="image/*" style="display:none;" onchange="sendAdminImage(this)">
+                        <button class="btn btn-photo" title="ပုံနှင့် အပိုပစ္စည်းဓာတ်ပုံ ပို့ရန်" onclick="document.getElementById('admin-photo-input').click()">📷</button>
+                        
+                        <input type="text" id="admin-chat-input" class="chat-input" placeholder="Client ထံစာပြန်ရန်..." onkeypress="if(event.key==='Enter') sendAdminMsg()">
+                        <button class="btn btn-blue" onclick="sendAdminMsg()">ပို့ရန်</button>
+                    </div>
+                </div>
+
+                <div class="panel" style="flex: 1;">
+                    <h3 style="color:#16a34a; margin-bottom:5px;">🧾 POS ပြေစာ တွက်ချက်ဖန်တီးစနစ်</h3>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <input type="number" id="pos-spare-cost" class="input-text" placeholder="အပိုပစ္စည်းခ (Ks)">
+                        <input type="number" id="pos-repair-cost" class="input-text" placeholder="ပြုပြင်ခ လက်ခ (Ks)">
+                        <input type="number" id="pos-deli-cost" class="input-text" placeholder="Delivery ပို့ဆောင်ခ (Ks)">
+                        <input type="number" id="pos-delivery-timer" class="input-text" placeholder="Delivery အချိန် (မိနစ် ၃၀ သို့ ၆၀)">
+                    </div>
+                    <textarea id="pos-agreement-text" class="input-text" style="height:45px;" placeholder="ပြုပြင်ရေး သဘောတူညီချက် စည်းကမ်းချက်များ..."></textarea>
+                    <button class="btn btn-green" style="margin-top:5px; width:100%;" onclick="generateInvoice()">🧾 စည်းကမ်းချက်နှင့် ငွေတွက်ချက်ပြီး POS Slip ထုတ်မည်</button>
+                </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:15px;">
+                <div class="panel" style="flex: 1.3;">
+                    <h3 style="color:#eab308;">🛍️ အရောင်းဆိုင် ပစ္စည်းများ စီမံခန့်ခွဲမှု (Items Manager)</h3>
+                    <div style="margin-top:5px; display:grid; grid-template-columns:1fr 1fr; gap:5px;">
+                        <input type="hidden" id="edit-item-id">
+                        <input type="text" id="item-name" class="input-text" placeholder="ပစ္စည်းအမည်">
+                        <input type="number" id="item-price" class="input-text" placeholder="ဈေးနှုန်း (Ks)">
+                        <input type="text" id="item-desc" class="input-text" style="grid-column: span 2;" placeholder="အသေးစိတ် အချက်အလက်ဖော်ပြချက်">
+                    </div>
+                    <div style="margin-top:6px; display:flex; gap:8px;">
+                        <button class="btn btn-green" onclick="saveItem()">💾 သိမ်းဆည်းမည်</button>
+                        <button class="btn btn-orange" onclick="resetItemForm()">🔄 ပုံမှန်အတိုင်းပြန်ထားရန်</button>
+                    </div>
+                    <div class="scroll-box">
+                        <table class="custom-table">
+                            <thead><tr><th>ID</th><th>အမည်</th><th>ဈေးနှုန်း</th><th>လုပ်ဆောင်ချက်</th></tr></thead>
+                            <tbody id="admin-items-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="panel" style="flex: 1;">
+                    <h3 style="color:#ea580c; margin-bottom:5px;">⏱️ Delivery မိနစ် ၃၀ / ၆၀ အချိန်ပြည့် Alert စောင့်ကြည့်စနစ်</h3>
+                    <div class="scroll-box" style="max-height: 180px;">
+                        <table class="custom-table">
+                            <thead><tr><th>ဝယ်သူ</th><th>သတ်မှတ်မိနစ်</th><th>ကျန်ရှိချိန်</th><th>အခြေအနေ</th></tr></thead>
+                            <tbody id="delivery-timers-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal" id="pos-modal">
+        <div class="slip-paper">
+            <div style="text-align:center; font-weight:bold; font-size:1rem; margin-bottom:5px;">KYAW LINN ELECTRIC CARE LAB</div>
+            <div style="text-align:center; font-size:0.75rem; margin-bottom:10px;">မော်လမြိုင်မြို့။ ဖုန်း - ၀၉၉၄၀၉၄၀၈၅၆</div>
+            <div style="border-bottom: 1px dashed black; margin: 8px 0;"></div>
+            <div id="pos-slip-content"></div>
+            <div style="border-bottom: 1px dashed black; margin: 8px 0;"></div>
+            <div style="text-align:center; font-size:0.75rem; font-weight:bold; margin-top:10px;">လာရောက်အားပေးမှုကို အထူးကျေးဇူးတင်ပါသည်ခင်ဗျာ။</div>
+            
+            <button onclick="sendReceiptToChat()" style="width:100%; margin-top:15px; background:#16a34a; color:white; padding:8px; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">📩 ဤပြေစာအား Client Chat box သို့ တိုက်ရိုက်ပို့မည်</button>
+            <button onclick="document.getElementById('pos-modal').style.display='none'" style="width:100%; margin-top:5px; background:#64748b; color:white; padding:5px; border:none; border-radius:4px; cursor:pointer;">ပိတ်မည်</button>
+        </div>
+    </div>
+
+    <audio id="noti-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav" preload="auto"></audio>
+
+    <script>
+        let selectedPhone = null;
+        let lastMessageCount = 0;
+        let deliveries = JSON.parse(localStorage.getItem('kl_deliveries')) || [];
+        let currentGeneratedTextReceipt = ""; // Chat သို့ ပို့ရန်ယာယီသိမ်းဆည်းသော String variable
+
+        window.onload = function() {
+            renderClients();
+            renderItemsTable();
+            startSystemLoops();
+            
+            window.addEventListener('storage', function(e) {
+                if(e.key === 'kl_chat_messages' || e.key === 'kl_client_list') {
+                    renderClients();
+                    if(selectedPhone) loadChat(selectedPhone);
+                    checkMessageNotification();
+                }
+            });
+        };
+
+        // LOOP CONTROL FOR ALERTS AND TIMERS
+        function startSystemLoops() {
+            setInterval(() => {
+                checkMessageNotification();
+                updateDeliveryTimers();
+            }, 1000);
+        }
+
+        // FUNCTION 3: CUSTOMER MESSAGE NOTIFICATION (SOUND + BADGE ALERT)
+        function checkMessageNotification() {
+            let msgs = JSON.parse(localStorage.getItem('kl_chat_messages')) || [];
+            if (msgs.length > lastMessageCount) {
+                if (lastMessageCount > 0) {
+                    document.getElementById("noti-indicator").style.display = "inline-block";
+                    document.getElementById("noti-sound").play().catch(e => console.log("Audio play deferred"));
+                }
+                lastMessageCount = msgs.length;
+                renderClients();
+            }
+        }
+
+        function renderClients() {
+            const container = document.getElementById("admin-client-list");
+            const clients = JSON.parse(localStorage.getItem('kl_client_list')) || [];
+            container.innerHTML = "";
+            clients.forEach(c => {
+                const d = document.createElement("div");
+                d.className = `client-item ${selectedPhone === c.phone ? 'active' : ''}`;
+                d.onclick = function() {
+                    selectedPhone = c.phone;
+                    document.getElementById("noti-indicator").style.display = "none";
+                    loadChat(c.phone);
+                    renderClients();
+                };
+                d.innerHTML = `<div style="font-weight:bold;">👤 ${c.name}</div><div style="font-size:0.75rem; color:#94a3b8;">📞 ${c.phone}</div>`;
+                container.appendChild(d);
+            });
+        }
+
+        function loadChat(phone) {
+            const clients = JSON.parse(localStorage.getItem('kl_client_list')) || [];
+            const target = clients.find(x => x.phone === phone);
+            document.getElementById("chat-title").innerText = `💬 Chat with: ${target ? target.name : phone}`;
+            
+            const box = document.getElementById("admin-chat-box");
+            box.innerHTML = "";
+            let msgs = JSON.parse(localStorage.getItem('kl_chat_messages')) || [];
+            let filtered = msgs.filter(x => x.clientPhone === phone);
+            
+            filtered.forEach(m => {
+                const d = document.createElement("div");
+                d.className = `msg ${m.sender === 'user' ? 'msg-user' : 'msg-admin'}`;
+                d.style.whiteSpace = "pre-line";
+                
+                // စာသား သို့မဟုတ် ဓာတ်ပုံ ပေါ်စေရန် စစ်ဆေးခြင်း
+                if (m.image) {
+                    d.innerHTML = `<div>${m.text}</div><img src="${m.image}" class="chat-img-render" onclick="window.open(this.src)">`;
+                } else {
+                    d.innerText = m.text;
+                }
+                
+                box.appendChild(d);
+            });
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function sendAdminMsg() {
+            const input = document.getElementById("admin-chat-input");
+            const text = input.value.trim();
+            if(!text || !selectedPhone) return;
+
+            let msgs = JSON.parse(localStorage.getItem('kl_chat_messages')) || [];
+            msgs.push({ clientPhone: selectedPhone, clientName: "", sender: "admin", text: text, timestamp: new Date().toLocaleTimeString() });
+            localStorage.setItem('kl_chat_messages', JSON.stringify(msgs));
+            input.value = "";
+            loadChat(selectedPhone);
+        }
+
+        // FUNCTION: CLIENT ထံသို့ အပိုပစ္စည်းပုံများ တိုက်ရိုက် ပေးပို့နိုင်ခြင်း
+        function sendAdminImage(inputElement) {
+            const file = inputElement.files[0];
+            if (!file || !selectedPhone) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Img = e.target.result;
+                let msgs = JSON.parse(localStorage.getItem('kl_chat_messages')) || [];
+                
+                // စာရင်းထဲသို့ ပုံထည့်သွင်းခြင်း
+                msgs.push({
+                    clientPhone: selectedPhone,
+                    clientName: "",
+                    sender: "admin",
+                    text: "📷 [အပိုပစ္စည်း/ပြုပြင်မှုပုံစံ]",
+                    image: base64Img,
+                    timestamp: new Date().toLocaleTimeString()
+                });
+                
+                localStorage.setItem('kl_chat_messages', JSON.stringify(msgs));
+                inputElement.value = ""; // cache ရှင်းလင်းခြင်း
+                loadChat(selectedPhone);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // FUNCTION 1: ITEMS MANAGER (SAVE, EDIT, DELETE)
+        function renderItemsTable() {
+            const tbody = document.getElementById("admin-items-table");
+            tbody.innerHTML = "";
+            let products = JSON.parse(localStorage.getItem('kl_products')) || [];
+            products.forEach(p => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${p.id}</td>
+                    <td><strong>${p.name}</strong></td>
+                    <td>${parseInt(p.price).toLocaleString()} Ks</td>
+                    <td>
+                        <button class="btn btn-blue" style="font-size:0.7rem; padding:3px 6px;" onclick="editItemForm(${p.id})">ပြင်မည်</button>
+                        <button class="btn btn-red" style="font-size:0.7rem; padding:3px 6px;" onclick="deleteItem(${p.id})">ဖျက်</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function saveItem() {
+            const idField = document.getElementById("edit-item-id").value;
+            const name = document.getElementById("item-name").value.trim();
+            const price = document.getElementById("item-price").value.trim();
+            const desc = document.getElementById("item-desc").value.trim();
+
+            if(!name || !price) { alert("အမည်နှင့် ဈေးနှုန်း အဓိကထည့်ပေးပါရန်"); return; }
+
+            let products = JSON.parse(localStorage.getItem('kl_products')) || [];
+
+            if(idField) {
+                products = products.map(x => x.id == idField ? { id: parseInt(idField), name, price: parseInt(price), desc } : x);
+            } else {
+                const newId = products.length > 0 ? Math.max(...products.map(x => x.id)) + 1 : 1;
+                products.push({ id: newId, name, price: parseInt(price), desc });
+            }
+
+            localStorage.setItem('kl_products', JSON.stringify(products));
+            resetItemForm();
+            renderItemsTable();
+        }
+
+        function editItemForm(id) {
+            let products = JSON.parse(localStorage.getItem('kl_products')) || [];
+            const p = products.find(x => x.id === id);
+            if(p) {
+                document.getElementById("edit-item-id").value = p.id;
+                document.getElementById("item-name").value = p.name;
+                document.getElementById("item-price").value = p.price;
+                document.getElementById("item-desc").value = p.desc;
+            }
+        }
+
+        function deleteItem(id) {
+            if(confirm("ဤပစ္စည်းကို အရောင်းဆိုင်စာရင်းမှ ဖျက်ပစ်ရန် သေချက်ပါသလား?")) {
+                let products = JSON.parse(localStorage.getItem('kl_products')) || [];
+                products = products.filter(x => x.id !== id);
+                localStorage.setItem('kl_products', JSON.stringify(products));
+                renderItemsTable();
+            }
+        }
+
+        function resetItemForm() {
+            document.getElementById("edit-item-id").value = "";
+            document.getElementById("item-name").value = "";
+            document.getElementById("item-price").value = "";
+            document.getElementById("item-desc").value = "";
+        }
+
+        // FUNCTION 2: DELIVERY TIMER MANAGEMENT (30/60 MINUTES ALERTS)
+        function updateDeliveryTimers() {
+            const tbody = document.getElementById("delivery-timers-table");
+            tbody.innerHTML = "";
+            
+            let now = Date.now();
+            deliveries.forEach((d, index) => {
+                let timeLeft = d.endTime - now;
+                let displayTime = "";
+                let statusBadge = "";
+
+                if(timeLeft <= 0) {
+                    displayTime = "🚨 အချိန်ပြည့်ပြီ!";
+                    statusBadge = `<span class="timer-badge">Alert 🔥</span>`;
+                } else {
+                    let totalSeconds = Math.floor(timeLeft / 1000);
+                    let mins = Math.floor(totalSeconds / 60);
+                    let secs = totalSeconds % 60;
+                    displayTime = `${mins} မိနစ် ${secs} စက္ကန့်`;
+                    statusBadge = `<span style="color:#eab308;">ပို့ဆောင်ဆဲ...</span>`;
+                }
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><strong>${d.custName}</strong></td>
+                    <td>${d.duration} မိနစ်</td>
+                    <td>${displayTime}</td>
+                    <td>${statusBadge} <button class="btn btn-blue" style="font-size:0.65rem; padding:2px 4px;" onclick="removeDelivery(${index})">Done</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function removeDelivery(index) {
+            deliveries.splice(index, 1);
+            localStorage.setItem('kl_deliveries', JSON.stringify(deliveries));
+        }
+
+        // FUNCTION 5: ADVANCED POS RECEIPT GENERATOR WITH AGREEMENTS
+        function generateInvoice() {
+            if(!selectedPhone) { alert("ကျေးဇူးပြု၍ ဘယ်ဘက်ခြမ်းမှ Client အကောင့်တစ်ခု အရင်ရွေးချယ်ပါဗျာ။"); return; }
+            
+            const clients = JSON.parse(localStorage.getItem('kl_client_list')) || [];
+            const targetClient = clients.find(x => x.phone === selectedPhone);
+            
+            const spare = parseInt(document.getElementById("pos-spare-cost").value) || 0;
+            const repair = parseInt(document.getElementById("pos-repair-cost").value) || 0;
+            const deli = parseInt(document.getElementById("pos-deli-cost").value) || 0;
+            const timerMins = parseInt(document.getElementById("pos-delivery-timer").value) || 0;
+            const agreement = document.getElementById("pos-agreement-text").value.trim() || "ပြုပြင်ပြီးသောပစ္စည်းများကို ဆိုင်မှ ၆ လအာမခံချက် အပြည့်ပေးပါသည်၊၊";
+
+            let totalCost = spare + repair + deli;
+            
+            if(timerMins > 0 && targetClient) {
+                let targetTimeMs = timerMins * 60 * 1000;
+                deliveries.push({
+                    custName: targetClient.name,
+                    phone: targetClient.phone,
+                    duration: timerMins,
+                    endTime: Date.now() + targetTimeMs
+                });
+                localStorage.setItem('kl_deliveries', JSON.stringify(deliveries));
+                document.getElementById("pos-delivery-timer").value = "";
+            }
+
+            // Build Receipt Markup for Admin Preview
+            let html = `
+                <div><strong>နေ့စွဲ:</strong> ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</div>
+                <div><strong>ဝယ်သူအမည်:</strong> ${targetClient ? targetClient.name : "အမည်မသိ"}</div>
+                <div><strong>ဖုန်းနံပါတ်:</strong> ${selectedPhone}</div>
+                <div><strong>လိပ်စာ:</strong> ${targetClient ? (targetClient.address || "မပါရှိပါ") : "မပါရှိပါ"}</div>
+                <div style="border-bottom: 1px dashed black; margin: 5px 0;"></div>
+                <div style="display:flex; justify-content:space-between;"><div>အပိုပစ္စည်းခ:</div><div>${spare.toLocaleString()} Ks</div></div>
+                <div style="display:flex; justify-content:space-between;"><div>ပြုပြင်ခ လက်ခ:</div><div>${repair.toLocaleString()} Ks</div></div>
+                <div style="display:flex; justify-content:space-between;"><div>ပို့ဆောင်ခ (Deli):</div><div>${deli.toLocaleString()} Ks</div></div>
+                <div style="border-bottom: 1px dashed black; margin: 5px 0;"></div>
+                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:0.9rem;"><div>စုစုပေါင်း ကျသင့်ငွေ:</div><div>${totalCost.toLocaleString()} Ks</div></div>
+                <div style="border-bottom: 1px dashed black; margin: 5px 0;"></div>
+                <div style="font-size:0.75rem; text-align:justify; font-style:italic;"><strong>📝 ပြုပြင်ရေး သဘောတူညီချက် -</strong><br>${agreement}</div>
+            `;
+
+            // Chatbox ထဲသို့ပို့ရန် စာသားပုံစံကြမ်းကိုပါ တစ်ခါတည်းတည်ဆောက်ခြင်း
+            currentGeneratedTextReceipt = `🧾 ပြေစာ (RECEIPT)
+----------------------------------
+KYAW LINN ELECTRIC CARE LAB
+ဖုန်း - ၀၉၉၄၀၉၄၀၈၅၆
+----------------------------------
+📅 နေ့စွဲ: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
+👤 ဝယ်သူ: ${targetClient ? targetClient.name : "အမည်မသိ"}
+📞 ဖုန်း: ${selectedPhone}
+----------------------------------
+🔧 အပိုပစ္စည်းခ: ${spare.toLocaleString()} Ks
+👨‍🔧 ပြုပြင်ခလက်ခ: ${repair.toLocaleString()} Ks
+🚚 ပို့ဆောင်ခ: ${deli.toLocaleString()} Ks
+----------------------------------
+💰 စုစုပေါင်းကျသင့်ငွေ: ${totalCost.toLocaleString()} Ks
+----------------------------------
+📝 စည်းကမ်းချက်များ: 
+${agreement}
+----------------------------------
+လာရောက်အားပေးမှုကို အထူးကျေးဇူးတင်ပါသည်။`;
+
+            document.getElementById("pos-slip-content").innerHTML = html;
+            document.getElementById("pos-modal").style.display = "flex";
+        }
+
+        // FUNCTION: RECEIPT ကို CHATBOX သို့ တိုက်ရိုက် ပေးပို့ခြင်း
+        function sendReceiptToChat() {
+            if (!selectedPhone || !currentGeneratedTextReceipt) return;
+
+            let msgs = JSON.parse(localStorage.getItem('kl_chat_messages')) || [];
+            msgs.push({
+                clientPhone: selectedPhone,
+                clientName: "",
+                sender: "admin",
+                text: currentGeneratedTextReceipt,
+                timestamp: new Date().toLocaleTimeString()
+            });
+
+            localStorage.setItem('kl_chat_messages', JSON.stringify(msgs));
+            loadChat(selectedPhone); // Chat screen refresh လုပ်ရန်
+            document.getElementById("pos-modal").style.display = "none"; // modal ပိတ်ရန်
+            alert("🧾 ပြေစာအား Client ၏ Chatbox သို့ အောင်မြင်စွာ ပို့ပြီးပါပြီဗျာ။");
+        }
+    </script>
+</body>
+</html>
